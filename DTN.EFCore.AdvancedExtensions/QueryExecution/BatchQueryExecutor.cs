@@ -1,4 +1,5 @@
-﻿using DTN.EFCore.AdvancedExtensions.Logging;
+﻿using DTN.EFCore.AdvancedExtensions.Core;
+using DTN.EFCore.AdvancedExtensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
@@ -6,12 +7,12 @@ namespace DTN.EFCore.AdvancedExtensions.QueryExecution
 {
     public class BatchQueryExecutor
     {
-        private readonly DbContext _context;
+        private readonly IDbContextFactory<AdvancedDbContext> _contextFactory;
         private readonly AdvancedQueryLogger _logger;
 
-        public BatchQueryExecutor(DbContext context, AdvancedQueryLogger logger)
+        public BatchQueryExecutor(IDbContextFactory<AdvancedDbContext> contextFactory, AdvancedQueryLogger logger)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _logger = logger;
         }
 
@@ -20,14 +21,16 @@ namespace DTN.EFCore.AdvancedExtensions.QueryExecution
             var results = new List<TResult>();
             var stopwatch = new Stopwatch();
 
-            foreach (var query in queries)
+            using (var context = await _contextFactory.CreateDbContextAsync())
             {
-                stopwatch.Restart();
-                var queryResults = await query.ToListAsync();
-                stopwatch.Stop();
-
-                results.AddRange(queryResults);
-                _logger.LogQuery(query.ToString(), stopwatch.Elapsed);
+                foreach (var query in queries)
+                {
+                    stopwatch.Restart();
+                    var queryResults = await query.ToListAsync();
+                    stopwatch.Stop();
+                    results.AddRange(queryResults);
+                    _logger.LogQuery(query.ToString(), stopwatch.Elapsed);
+                }
             }
 
             return results;
@@ -38,14 +41,16 @@ namespace DTN.EFCore.AdvancedExtensions.QueryExecution
             var results = new Dictionary<string, List<TResult>>();
             var stopwatch = new Stopwatch();
 
-            foreach (var (name, query) in namedQueries)
+            using (var context = await _contextFactory.CreateDbContextAsync())
             {
-                stopwatch.Restart();
-                var queryResults = await query.ToListAsync();
-                stopwatch.Stop();
-
-                results[name] = queryResults;
-                _logger.LogQuery($"{name}: {query}", stopwatch.Elapsed);
+                foreach (var (name, query) in namedQueries)
+                {
+                    stopwatch.Restart();
+                    var queryResults = await query.ToListAsync();
+                    stopwatch.Stop();
+                    results[name] = queryResults;
+                    _logger.LogQuery($"{name}: {query}", stopwatch.Elapsed);
+                }
             }
 
             return results;
@@ -55,16 +60,18 @@ namespace DTN.EFCore.AdvancedExtensions.QueryExecution
         {
             var stopwatch = new Stopwatch();
 
-            foreach (var operation in operations)
+            using (var context = await _contextFactory.CreateDbContextAsync())
             {
-                stopwatch.Restart();
-                await operation(_context);
-                stopwatch.Stop();
+                foreach (var operation in operations)
+                {
+                    stopwatch.Restart();
+                    await operation(context);
+                    stopwatch.Stop();
+                    _logger.LogSlowQuery(operation.Method.Name, stopwatch.Elapsed);
+                }
 
-                _logger.LogSlowQuery(operation.Method.Name, stopwatch.Elapsed);
+                await context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
         }
     }
 }

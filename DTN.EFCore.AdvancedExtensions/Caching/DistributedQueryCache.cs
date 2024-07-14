@@ -1,4 +1,5 @@
-﻿using DTN.EFCore.AdvancedExtensions.MachineLearning;
+﻿using DTN.EFCore.AdvancedExtensions.Core;
+using DTN.EFCore.AdvancedExtensions.MachineLearning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Caching.Distributed;
@@ -12,13 +13,13 @@ namespace DTN.EFCore.AdvancedExtensions.Caching
         private readonly IDistributedCache _distributedCache;
         private readonly CacheStrategyProvider _cacheStrategyProvider;
         private readonly QueryPredictionModel _queryPredictionModel;
-        private readonly IDbContextFactory<DbContext> _contextFactory;
+        private readonly IDbContextFactory<AdvancedDbContext> _contextFactory;
 
         public DistributedQueryCache(
             IDistributedCache distributedCache,
             CacheStrategyProvider cacheStrategyProvider,
             QueryPredictionModel queryPredictionModel,
-            IDbContextFactory<DbContext> contextFactory)
+            IDbContextFactory<AdvancedDbContext> contextFactory)
         {
             _distributedCache = distributedCache;
             _cacheStrategyProvider = cacheStrategyProvider;

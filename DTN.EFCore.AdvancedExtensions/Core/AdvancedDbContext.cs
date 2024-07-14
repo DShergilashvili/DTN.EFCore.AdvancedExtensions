@@ -7,8 +7,6 @@ using DTN.EFCore.AdvancedExtensions.QueryOptimization;
 using DTN.EFCore.AdvancedExtensions.Security;
 using DTN.EFCore.AdvancedExtensions.Transactions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
-using System.Security.Claims;
 
 namespace DTN.EFCore.AdvancedExtensions.Core
 {
@@ -25,25 +23,26 @@ namespace DTN.EFCore.AdvancedExtensions.Core
         private readonly AdvancedQueryOptimizer _advancedQueryOptimizer;
 
         public AdvancedDbContext(
-            DbContextOptions options,
-            IDistributedCache distributedCache,
-            IDbContextFactory<DbContext> contextFactory,
-            AdvancedQueryLogger logger,
-            ClaimsPrincipal user) : base(options)
+            DbContextOptions<AdvancedDbContext> options,
+            BatchQueryExecutor batchQueryExecutor,
+            PerformanceProfiler performanceProfiler,
+            AuditTrailManager auditTrailManager,
+            TransactionManager transactionManager,
+            QuerySanitizer querySanitizer,
+            DistributedQueryCache queryCache,
+            AccessControlManager accessControlManager,
+            QueryPredictionModel queryPredictionModel,
+            AdvancedQueryOptimizer advancedQueryOptimizer) : base(options)
         {
-            _batchQueryExecutor = new BatchQueryExecutor(this, logger);
-            _performanceProfiler = new PerformanceProfiler();
-            _auditTrailManager = new AuditTrailManager();
-            _transactionManager = new TransactionManager(this);
-            _querySanitizer = new QuerySanitizer();
-
-            var cacheStrategyProvider = new CacheStrategyProvider(this);
-            var queryPredictionModel = new QueryPredictionModel();
-            _queryCache = new DistributedQueryCache(distributedCache, cacheStrategyProvider, queryPredictionModel, contextFactory);
-
-            _accessControlManager = new AccessControlManager(user);
+            _batchQueryExecutor = batchQueryExecutor;
+            _performanceProfiler = performanceProfiler;
+            _auditTrailManager = auditTrailManager;
+            _transactionManager = transactionManager;
+            _querySanitizer = querySanitizer;
+            _queryCache = queryCache;
+            _accessControlManager = accessControlManager;
             _queryPredictionModel = queryPredictionModel;
-            _advancedQueryOptimizer = new AdvancedQueryOptimizer(new QueryPlanAnalyzer(), new IndexSuggestionEngine(), queryPredictionModel);
+            _advancedQueryOptimizer = advancedQueryOptimizer;
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

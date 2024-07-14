@@ -1,41 +1,10 @@
-using DTN.EFCore.AdvancedExtensions.Caching;
-using DTN.EFCore.AdvancedExtensions.Core;
-using DTN.EFCore.AdvancedExtensions.Logging;
-using DTN.EFCore.AdvancedExtensions.MachineLearning;
-using DTN.EFCore.AdvancedExtensions.QueryAnalysis;
-using DTN.EFCore.AdvancedExtensions.QueryExecution;
-using DTN.EFCore.AdvancedExtensions.QueryOptimization;
-using DTN.EFCore.AdvancedExtensions.Security;
-using DTN.EFCore.AdvancedExtensions.Transactions;
-using Microsoft.EntityFrameworkCore;
+using DTN.EFCore.AdvancedExtensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<BatchQueryExecutor>();
-builder.Services.AddSingleton<PerformanceProfiler>();
-builder.Services.AddSingleton<AuditTrailManager>();
-builder.Services.AddSingleton<TransactionManager>();
-builder.Services.AddSingleton<QuerySanitizer>();
-builder.Services.AddSingleton<CacheStrategyProvider>();
-builder.Services.AddSingleton<QueryPredictionModel>();
-builder.Services.AddSingleton<DistributedQueryCache>();
-builder.Services.AddSingleton<AccessControlManager>();
-builder.Services.AddSingleton<AdvancedQueryOptimizer>();
-builder.Services.AddSingleton<QueryPlanAnalyzer>();
-builder.Services.AddSingleton<IndexSuggestionEngine>();
-builder.Services.AddSingleton<AdvancedQueryLogger>();
-builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddDbContext<AdvancedDbContext>((serviceProvider, options) =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 
-    // Use the internal service provider
-    options.UseInternalServiceProvider(serviceProvider);
-});
-
-builder.Services.AddDbContextFactory<AdvancedDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddAdvancedEFExtensions(builder.Configuration);
 
 // Add services to the container.
 builder.Services.AddControllers();
