@@ -1,0 +1,6 @@
+@DTN.EFCore.AdvancedExtensions.Example_HostAddress = http://localhost:5118
+
+GET {{DTN.EFCore.AdvancedExtensions.Example_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
